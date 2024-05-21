@@ -51,5 +51,7 @@ POST. DELETE, PATCH методы рекомендуется отрабатыва
 
 <img src="https://github.com/KazakNi/profile_storage/blob/main/get.jpg" > </img>
 
+Авторизация к ресурсам выполнена с помощью cookies, подписанных приватным ключом.
+
 
 
