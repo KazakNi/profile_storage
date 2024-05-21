@@ -1,0 +1,237 @@
+openapi: 3.0.3
+info:
+  title: Swagger User Profile Store - OpenAPI 3.0
+  description: >-
+    This is a sample Profile Store API Service based on the OpenAPI 3.0
+    specification. 
+  contact:
+    email: kazakov.ni@yandex.ru
+  version: 1.0.1
+servers:
+  - url: localhost:8080
+paths:
+  /user/{id}:
+    get:
+      tags:
+        - user
+      summary: Get a user profile
+      description:  Limited to logged users.
+      operationId: getUser  
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the film to update
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGet'      
+        '401':
+          description: Unauthenticated
+        '404':
+          description: Not found        
+      security:
+        - basicAuth: []          
+    patch:
+      tags:
+        - user
+      summary: Update an existing user
+      description:  Limited to admin
+      operationId: editUser
+      requestBody:
+        description: Update an existent user in the database
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+        required: true
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the user to be updated
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Successful update
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '409':
+          description: Username is already exists   
+      security:
+        - basicAuth: []      
+    delete:
+      tags:
+        - user
+      summary: Delete an user
+      description:  Limited to admin
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the film to update
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Successful deletion
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Not found
+      security:
+        - basicAuth: []
+  /user:
+    post:
+      tags:
+        - user
+      summary: Creating an user
+      description:  Limited to admin.
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserID'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized  
+        '409':
+          description: Username is already exists  
+      security:
+        - basicAuth: []
+    get:
+      tags:
+        - user
+      summary: Get all users
+      description:  Limited to logged users
+      operationId: getListUsers
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            description: results per page 
+        - in: query
+          name: offset
+          required: false
+          schema:
+            type: integer
+            description: offset result 
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGet'
+        '400':
+          description: Bad request          
+        '401':
+          description: Unauthenticated    
+      security:
+        - basicAuth: []      
+components:
+  schemas:
+    UserGet:
+      type: object
+      required:
+          - id
+          - email
+          - username
+          - admin
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 4c31f14f-6ab8-4e60-bdfb-08482bdaaf84  
+        username:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email  
+        admin:
+          type: boolean
+          default: false
+    UserCreate:
+      type: object
+      required:
+        - email
+        - username
+        - password
+        - admin
+      properties:
+        username:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          example: 'qwerty'
+        admin:
+          type: boolean
+          default: false
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          example: 'qwerty'
+        admin:
+          type: boolean
+          default: false          
+    UserID:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          type: integer
+          format: uuid
+          example: 4c31f14f-6ab8-4e60-bdfb-08482bdaaf84
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Use `admin` / `admin` as the test credentials

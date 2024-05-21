@@ -1,0 +1,6 @@
+server:
+  host: localhost
+  port: 8080
+token:
+  secret: 378C92D8B6B82182D753F8119473C0B268620B9AE64F34A2FBE176D8E262A861
+  salt: ssdfASFF3lskdflk!<32kalsdkf1
