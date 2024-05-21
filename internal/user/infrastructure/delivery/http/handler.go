@@ -2,10 +2,13 @@ package delivery
 
 import (
 	"encoding/json"
+	"html/template"
+	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
+	"users/config"
 	"users/internal/user/infrastructure/dto"
 	"users/internal/user/infrastructure/repository"
 	slogger "users/pkg/logger"
@@ -227,4 +230,13 @@ func StatusOkContent(w http.ResponseWriter, r *http.Request, user dto.ListUser) 
 	w.WriteHeader(http.StatusOK)
 	b, _ := json.Marshal(user)
 	w.Write(b)
+}
+
+func ReDoc(w http.ResponseWriter, r *http.Request) {
+	static_path := config.Cfg.Swagger.HtmlPath
+	tmpl, err := template.ParseFiles(static_path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tmpl.Execute(w, nil)
 }

@@ -27,6 +27,11 @@ func Run() {
 
 	mux.Handle("/user/", UserHandler)
 
+	// Swagger specification
+
+	mux.HandleFunc("GET /redoc", delivery.ReDoc)
+	mux.Handle("/swagger.yaml", http.FileServer(http.Dir(config.Cfg.Swagger.StaticPath)))
+
 	go func() {
 		if err := http.ListenAndServe(fmt.Sprintf("%s:%s", config.Cfg.Server.Host, config.Cfg.Server.Port), mux); err != nil {
 			slogger.Logger.Error("error, server is crashed: ", "err", err)

@@ -15,6 +15,10 @@ type AppConfig struct {
 		Secret string `yaml:"secret"`
 		Salt   string `yaml:"salt"`
 	} `yaml:"token"`
+	Swagger struct {
+		HtmlPath   string `yaml:"htmlPath" env:"htmlPath" env-description:"Path to swagger html" env-default:"../pkg/static/redoc.html"`
+		StaticPath string `yaml:"staticPath" env:"staticPath" env-description:"Path to static folder" env-default:"../pkg/static/"`
+	}
 }
 
 var Cfg AppConfig
