@@ -15,7 +15,7 @@ cd profile_storage
 Запустить docker-compose
 
 ```
-docker-compose up
+docker-compose up -d
 ```
 
 Спецификация OpenAPI будет доступна по адресу http://localhost:8080/redoc
