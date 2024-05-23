@@ -8,9 +8,9 @@ import (
 	"log"
 	"net/http"
 	"users/config"
+	"users/internal/cookies"
 	"users/internal/user/infrastructure/dto"
 	"users/internal/user/infrastructure/repository"
-	"users/pkg/cookies"
 	slogger "users/pkg/logger"
 )
 
@@ -25,7 +25,7 @@ func AuthRequiredCheck(repo repository.UserRepository, next http.Handler) http.H
 			dbCredentials, ok := repo.GetCredentialsByUsername(username)
 
 			if ok && dto.CheckPassword(loggingCredentials.Password, dbCredentials.Password) {
-				if dbCredentials.Admin {
+				if *dbCredentials.Admin {
 					setRoleCookieHandler(w, "admin")
 					next.ServeHTTP(w, r)
 					return
@@ -85,7 +85,7 @@ func setRoleCookieHandler(w http.ResponseWriter, userRole string) {
 		MaxAge:   3600 * 12,
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 	}
 
 	secretKey, err := hex.DecodeString(config.Cfg.Token.Secret)
@@ -93,7 +93,7 @@ func setRoleCookieHandler(w http.ResponseWriter, userRole string) {
 		log.Fatal(err)
 	}
 
-	err = cookies.WriteSigned(w, cookie, secretKey)
+	err = cookies.WriteSigned(w, &cookie, secretKey)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "server error", http.StatusInternalServerError)
@@ -108,8 +108,8 @@ func getCookieHandler(r *http.Request) (string, error) {
 		log.Fatal(err)
 	}
 	value, err := cookies.ReadSigned(r, "Role", secretKey)
-	if err != nil {
 
+	if err != nil {
 		return "", err
 	}
 	return value, nil

@@ -2,10 +2,9 @@ package repository
 
 import (
 	"encoding/json"
-	"fmt"
+	storage "users/internal/db"
 	entity "users/internal/user/domain"
 	"users/internal/user/infrastructure/dto"
-	storage "users/pkg/db"
 
 	"github.com/google/uuid"
 )
@@ -41,17 +40,13 @@ func (u *UserRepo) CreateUser(user dto.CreateUser) (uuid string, err error) {
 	db_user := user.ToStorageUser(id)
 	b, _ := json.Marshal(db_user)
 
-	u.userdb.Lock()
-	u.userdb.Storage[id] = b
-	u.userdb.Unlock()
+	u.userdb.Set(id, b)
 
 	auth_user := dto.AuthPermission{Password: db_user.Password,
 		Admin: db_user.Admin}
 
 	b, _ = json.Marshal(auth_user)
-	u.authdb.Lock()
-	u.authdb.Storage[user.Username] = b
-	u.authdb.Unlock()
+	u.authdb.Set(user.Username, b)
 
 	return id, nil
 
@@ -86,16 +81,14 @@ func (u *UserRepo) GetUserList(limit, offset int) []dto.ListUser {
 	}
 
 	res := []dto.ListUser{}
+	var db_user dto.ListUser
 
-	u.userdb.RLock()
+	users := u.userdb.GetUsers()
 
-	for _, v := range u.userdb.Storage {
-		var user dto.ListUser
-		json.Unmarshal(v, &user)
-		res = append(res, user)
+	for _, user := range users {
+		json.Unmarshal(user, &db_user)
+		res = append(res, db_user)
 	}
-
-	u.userdb.RUnlock()
 
 	return res
 
@@ -106,27 +99,19 @@ func (u *UserRepo) UpdateUser(uuid string, user dto.UpdateUser) {
 
 	json.Unmarshal(u.userdb.Storage[uuid], &userToUpdate)
 
-	fmt.Println("userToUpdate", userToUpdate)
-
 	user.HashPassword()
 	user.MakeUpdatedUser(&userToUpdate)
 
-	fmt.Println("userToUpdate", userToUpdate)
-
 	b, _ := json.Marshal(userToUpdate)
-	u.userdb.Lock()
-	u.userdb.Storage[uuid] = b
-	u.userdb.Unlock()
+	u.userdb.Set(uuid, b)
 
 	if user.Username != "" {
 		a := dto.AuthPermission{Password: user.Password,
 			Admin: user.Admin}
 
 		b, _ = json.Marshal(a)
-		u.authdb.Lock()
-		delete(u.authdb.Storage, userToUpdate.Username)
-		u.authdb.Storage[user.Username] = b
-		u.authdb.Unlock()
+		u.authdb.Delete(userToUpdate.Username)
+		u.authdb.Set(user.Username, b)
 	}
 
 }
@@ -135,46 +120,29 @@ func (u *UserRepo) DeleteUser(uuid string) {
 
 	var user entity.User
 
-	u.userdb.Lock()
-
-	b := u.userdb.Storage[uuid]
+	b, _ := u.userdb.Get(uuid)
 	json.Unmarshal(b, &user)
 
-	delete(u.userdb.Storage, uuid)
-
-	u.userdb.Unlock()
-
-	u.authdb.Lock()
-	delete(u.authdb.Storage, user.Username)
-	u.authdb.Unlock()
+	u.userdb.Delete(uuid)
+	u.authdb.Delete(user.Username)
 }
 
 func (u *UserRepo) IfUserExist(uuid string) bool {
-	u.userdb.RLock()
-	_, ok := u.userdb.Storage[uuid]
-	u.userdb.RUnlock()
+	_, ok := u.userdb.Get(uuid)
 	return ok
 }
 
 func (u *UserRepo) GetUserById(uuid string) dto.ListUser {
 	var user dto.ListUser
-
-	u.userdb.RLock()
-
-	b := u.userdb.Storage[uuid]
+	b, _ := u.userdb.Get(uuid)
 	json.Unmarshal(b, &user)
-
-	u.userdb.RUnlock()
-
 	return user
 }
 
 func (u *UserRepo) GetCredentialsByUsername(username string) (dto.AuthPermission, bool) {
 
 	var authCredentials dto.AuthPermission
-	u.authdb.RLock()
-	defer u.authdb.RUnlock()
-	b, ok := u.authdb.Storage[username]
+	b, ok := u.authdb.Get(username)
 
 	if !ok {
 		return authCredentials, ok
@@ -189,10 +157,11 @@ func (u *UserRepo) GenerateUUID() string {
 }
 
 func (u *UserRepo) CreateAdmin() {
+	admin := true
 	user := dto.CreateUser{Email: "lol@test.ru",
 		Username: "admin",
 		Password: "admin",
-		Admin:    true}
+		Admin:    &admin}
 
 	id := u.GenerateUUID()
 	user.HashPassword()
@@ -200,17 +169,12 @@ func (u *UserRepo) CreateAdmin() {
 	db_user := user.ToStorageUser(id)
 	b, _ := json.Marshal(db_user)
 
-	u.userdb.Lock()
-	u.userdb.Storage[id] = b
-	u.userdb.Unlock()
+	u.userdb.Set(id, b)
 
 	auth_user := dto.AuthPermission{Password: db_user.Password,
 		Admin: db_user.Admin}
 
 	b, _ = json.Marshal(auth_user)
 
-	u.authdb.Lock()
-	u.authdb.Storage[user.Username] = b
-	u.authdb.Unlock()
-
+	u.authdb.Set(user.Username, b)
 }

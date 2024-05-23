@@ -9,11 +9,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var falseValue = false
+
 type CreateUser struct {
 	Username string `json:"username" validate:"required,max=150"`
 	Email    string `json:"email" validate:"required,email,max=150"`
 	Password string `json:"password" validate:"required,alphanumunicode,max=100"`
-	Admin    bool   `json:"admin" validate:"required,boolean"`
+	Admin    *bool  `json:"admin" validate:"required,boolean"`
 }
 
 func (c *CreateUser) ToStorageUser(id string) entity.User {
@@ -35,7 +37,7 @@ func (c *CreateUser) Validate() error {
 }
 
 func (c *CreateUser) HashPassword() error {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(c.Password+config.Cfg.Token.Salt), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(c.Password+config.Cfg.Token.Salt), 4)
 	if err != nil {
 		return err
 	}
@@ -47,7 +49,7 @@ type UpdateUser struct {
 	Username string `json:"username,omitempty" validate:"omitempty,alphanumunicode,max=150"`
 	Email    string `json:"email,omitempty" validate:"omitempty,email,max=150"`
 	Password string `json:"password,omitempty" validate:"omitempty,alphanumunicode,max=100"`
-	Admin    bool   `json:"admin,omitempty" validate:"omitempty,boolean"`
+	Admin    *bool  `json:"admin,omitempty" validate:"omitempty,boolean"`
 }
 
 func (u *UpdateUser) Validate() error {
@@ -61,6 +63,9 @@ func (u *UpdateUser) Validate() error {
 }
 
 func (u *UpdateUser) MakeUpdatedUser(userToUpdate *entity.User) {
+	if u.Admin == nil {
+		u.Admin = &falseValue
+	}
 	updatedEntity := entity.User{
 		Id:       userToUpdate.Id,
 		Username: u.Username,
@@ -73,7 +78,7 @@ func (u *UpdateUser) MakeUpdatedUser(userToUpdate *entity.User) {
 }
 
 func (u *UpdateUser) HashPassword() error {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(u.Password+config.Cfg.Token.Salt), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(u.Password+config.Cfg.Token.Salt), 4)
 	if err != nil {
 		return err
 	}
@@ -87,11 +92,11 @@ type UserId struct {
 
 type AuthPermission struct {
 	Password string `json:"password"`
-	Admin    bool   `json:"admin"`
+	Admin    *bool  `json:"admin"`
 }
 
 func (a *AuthPermission) HashPassword() error {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(a.Password+config.Cfg.Token.Salt), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(a.Password+config.Cfg.Token.Salt), 4)
 	if err != nil {
 		return err
 	}
@@ -100,10 +105,10 @@ func (a *AuthPermission) HashPassword() error {
 }
 
 type ListUser struct {
-	Id       string `json:"id,omitempty"`
-	Username string `json:"username,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Admin    bool   `json:"admin,omitempty"`
+	Id       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Admin    bool   `json:"admin"`
 }
 
 type ErrorResponse struct {

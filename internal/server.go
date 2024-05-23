@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 	"users/config"
+	storage "users/internal/db"
 	delivery "users/internal/user/infrastructure/delivery/http"
 	"users/internal/user/infrastructure/repository"
-	storage "users/pkg/db"
 	slogger "users/pkg/logger"
 )
 
