@@ -26,12 +26,12 @@ func AuthRequiredCheck(repo repository.UserRepository, next http.Handler) http.H
 
 			if ok && dto.CheckPassword(loggingCredentials.Password, dbCredentials.Password) {
 				if *dbCredentials.Admin {
-					setRoleCookieHandler(w, "admin")
+					setRoleCookieHandler(w, r, "admin")
 					next.ServeHTTP(w, r)
 					return
 
 				} else {
-					setRoleCookieHandler(w, "user")
+					setRoleCookieHandler(w, r, "user")
 					next.ServeHTTP(w, r)
 					return
 
@@ -76,7 +76,7 @@ func IsAdminCheck(next http.Handler) http.Handler {
 	})
 }
 
-func setRoleCookieHandler(w http.ResponseWriter, userRole string) {
+func setRoleCookieHandler(w http.ResponseWriter, r *http.Request, userRole string) {
 
 	cookie := http.Cookie{
 		Name:     "Role",
@@ -93,7 +93,7 @@ func setRoleCookieHandler(w http.ResponseWriter, userRole string) {
 		log.Fatal(err)
 	}
 
-	err = cookies.WriteSigned(w, &cookie, secretKey)
+	err = cookies.WriteSigned(w, r, &cookie, secretKey)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "server error", http.StatusInternalServerError)

@@ -11,7 +11,7 @@ import (
 var ErrInvalidValue = errors.New("invalid cookie value")
 var ErrValueTooLong = errors.New("invalid cookie length")
 
-func WriteSigned(w http.ResponseWriter, cookie *http.Cookie, secretKey []byte) error {
+func WriteSigned(w http.ResponseWriter, r *http.Request, cookie *http.Cookie, secretKey []byte) error {
 	// Calculate a HMAC signature of the cookie name and value, using SHA256 and
 	// a secret key (which we will create in a moment).
 	mac := hmac.New(sha256.New, secretKey)
@@ -24,7 +24,7 @@ func WriteSigned(w http.ResponseWriter, cookie *http.Cookie, secretKey []byte) e
 
 	// Call our Write() helper to base64-encode the new cookie value and write
 	// the cookie.
-	return Write(w, cookie)
+	return Write(w, r, cookie)
 }
 
 func ReadSigned(r *http.Request, name string, secretKey []byte) (string, error) {
@@ -65,7 +65,7 @@ func ReadSigned(r *http.Request, name string, secretKey []byte) (string, error) 
 	return value, nil
 }
 
-func Write(w http.ResponseWriter, cookie *http.Cookie) error {
+func Write(w http.ResponseWriter, r *http.Request, cookie *http.Cookie) error {
 	// Encode the cookie value using base64.
 	cookie.Value = base64.URLEncoding.EncodeToString([]byte(cookie.Value))
 
@@ -77,6 +77,7 @@ func Write(w http.ResponseWriter, cookie *http.Cookie) error {
 
 	// Write the cookie as normal.
 	http.SetCookie(w, cookie)
+	r.AddCookie(cookie)
 
 	return nil
 }

@@ -46,7 +46,7 @@ func (c *CreateUser) HashPassword() error {
 }
 
 type UpdateUser struct {
-	Username string `json:"username,omitempty" validate:"omitempty,alphanumunicode,max=150"`
+	Username string `json:"username,omitempty" validate:"omitempty,max=150"`
 	Email    string `json:"email,omitempty" validate:"omitempty,email,max=150"`
 	Password string `json:"password,omitempty" validate:"omitempty,alphanumunicode,max=100"`
 	Admin    *bool  `json:"admin,omitempty" validate:"omitempty,boolean"`

@@ -125,6 +125,7 @@ func (u *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := user.Validate(); err != nil {
+		slogger.Logger.Info("error while UpdateUser validation: %s", err)
 		BadRequestHandler(w, r)
 		return
 	}
